@@ -8,6 +8,10 @@ gsap.defaults({
   duration: 0.3,
 });
 
+let testVar;
+testVar = 1;
+console.log(testVar);
+
 ///////////////////////////////////
 // utility & animation functions //
 ///////////////////////////////////
