@@ -1,16 +1,8 @@
-function testLog() {
-  console.log("code sandbox connected");
-}
-
 // gsap defaults
 gsap.defaults({
   ease: "power2.inOut",
   duration: 0.3,
 });
-
-let testVar;
-testVar = 1;
-console.log(testVar);
 
 ///////////////////////////////////
 // utility & animation functions //
@@ -26,6 +18,7 @@ function initLenisMain() {
   lenisMain = new Lenis({
     lerp: 0.95,
     smooth: true,
+    autoResize: true,
   });
 
   lenisMain.on("scroll", (e) => {
@@ -47,10 +40,11 @@ function workImages(page) {
   if (window.innerWidth < 992) return;
   function randomPos() {
     let min = 16;
-    let max = window.innerWidth - 975;
+    let max = window.innerWidth / 2 - 400;
     let randomNumber = Math.ceil(Math.random() * (max - min) + min);
     return randomNumber;
   }
+
   let projects = page.querySelectorAll(".work_item-wrapper");
 
   projects.forEach((project) => {
@@ -110,6 +104,7 @@ function workEnumerate(page) {
 // rock animation on about page
 let rockTl = gsap.timeline();
 function flyingRock(page) {
+  return; // animation disabled. Remove this line to re-enable
   let image = page.querySelector(".stone-animation_stone-wrapper");
   if (!image) {
     return;
@@ -122,8 +117,6 @@ function flyingRock(page) {
   if (window.innerWidth > 1550) {
     timeMod = window.innerWidth / 1550;
   }
-
-  console.log(timeMod);
 
   if (rockTl.isActive()) {
     rockTl.kill();
@@ -164,7 +157,7 @@ function flyingRock(page) {
       duration: 3 * timeMod,
       ease: "linear",
     })
-    .repeat(-1); // Reverse the animation after each cycle
+    .repeat(-1);
 }
 
 // Vimeo video functionality via Player SDK
@@ -228,18 +221,6 @@ function navigationButtons(page) {
       ?.firstElementChild?.lastElementChild?.querySelector("a")
       ?.getAttribute("href");
 
-  let nextProjectName =
-    page
-      .querySelector("#post_list .w--current")
-      ?.parentElement?.nextElementSibling?.querySelector("a")
-      ?.getAttribute("project_name") || null;
-
-  let previousProjectName =
-    page
-      .querySelector("#post_list .w--current")
-      ?.parentElement?.previousElementSibling?.querySelector("a")
-      ?.getAttribute("project_name") || null;
-
   let nextButton = page.querySelector("#next_button");
   if (nextButton) {
     if (nexthref == null) {
@@ -247,7 +228,6 @@ function navigationButtons(page) {
       gsap.set(nextButton, { display: "none" });
     }
     nextButton.href = nexthref;
-    // nextButton.querySelector(".text-caption-large").innerHTML = nextProjectName;
   }
   let previousButton = page.querySelector("#previous_button");
   if (previousButton) {
@@ -256,17 +236,11 @@ function navigationButtons(page) {
       gsap.set(previousButton, { display: "none" });
     }
     previousButton.href = previoushref;
-    // previousButton.querySelector(".text-caption-large").innerHTML =
-    //   previousProjectName;
   }
 }
 
 // auto play video on home page
 function homeVideoPlay(page) {
-  // let video = page.querySelector(".hero_background-video").firstElementChild;
-  // if (video) {
-  //   video.play();
-  // }
   let videos = page.querySelectorAll("video");
   if (videos) {
     videos.forEach((video) => {
@@ -280,15 +254,11 @@ function homeLogo(page) {
   let tl = gsap.timeline();
 
   tl.set(logo, { opacity: 1 });
-  // tl.set(logo, { opacity: 0, y: "1.5rem", scale: 1.1 });
-  // tl.to(logo, { opacity: 1, duration: 0.1, delay: 1 });
-  // tl.to(logo, { y: "", scale: 1, duration: 0.3, ease: "power2.out" }, "<");
 }
 
 // scale image on about page
 function scaleImage(page) {
   setTimeout(() => {
-    console.log("scale image");
     gsap.registerPlugin(ScrollTrigger);
 
     let image = page.querySelector(".about_photograph-wrapper *");
@@ -374,36 +344,13 @@ barba.init({
         initLenisMain();
         lenisMain.scrollTo(0);
       },
-    },
-    {
-      name: "project-transition",
-      from: {
-        namespace: ["work-disabled"], // adjust to enable
-      },
-      to: {
-        namespace: ["project-page"],
-      },
-      async leave(data) {
-        let page = data.current.container;
-        let nextPage = data.next.container;
-        let footer = document.querySelector(".footer");
-        let image = data.trigger.querySelector(".work_cover-image-frame");
-        let tl = gsap.timeline();
-
-        await tl
-          .to(footer, { y: "100svh" })
-          .to(image, { x: "-100svw", ease: "power3.in", duration: 0.6 }, "<")
-          .to(page, { x: "-100svw", duration: 0.5, delay: -0.2 })
-          .set(nextPage, { x: "100svw", delay: -0.2 });
-      },
-      enter(data) {
-        let nextPage = data.next.container;
-        let footer = document.querySelector(".footer");
-
-        gsap.to(nextPage, { x: "0svw", duration: 0.5 });
-        gsap.to(footer, { y: "" });
-        initLenisMain();
-        lenisMain.scrollTo(0);
+      afterEnter(data) {
+        page = data.next.container;
+        page.querySelectorAll("img").forEach((img) => {
+          img.addEventListener("load", () => {
+            lenisMain.resize();
+          });
+        });
       },
     },
     {
@@ -423,9 +370,13 @@ barba.init({
 // init functions //
 ////////////////////
 
-function mainInit(page = document) {
-  testLog();
+function mainInit() {
   initLenisMain();
+  document.querySelectorAll("img").forEach((img) => {
+    img.addEventListener("load", () => {
+      lenisMain.resize();
+    });
+  });
 
   let resizeTimeout;
   window.addEventListener("resize", () => {
@@ -454,6 +405,7 @@ function aboutInit(page) {
 function homeInit(page) {
   homeVideoPlay(page);
   homeLogo(page);
+  gsap.to("#hero_links", { pointerEvents: "auto" });
 }
 
 ///////////////
